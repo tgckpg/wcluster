@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration( "" )]
 [assembly: AssemblyCompany( "" )]
 [assembly: AssemblyProduct( "wcluster" )]
-[assembly: AssemblyCopyright( "Copyright ©  2016" )]
+[assembly: AssemblyCopyright( "Astropenguin © 2016" )]
 [assembly: AssemblyTrademark( "" )]
 [assembly: AssemblyCulture( "" )]
 
