@@ -66,6 +66,8 @@ function serverEnd() {
         echo "done"
     fi
 
+    sleep 1
+
     echo "{CI_SECTION_START} access.log"
     cat $SERVER_LOG;
     echo "{CI_SECTION_END}"
