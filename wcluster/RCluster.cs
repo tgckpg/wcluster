@@ -27,8 +27,10 @@ namespace wcluster
 
         private Regex PatternMD5 = new Regex( "^[\\dA-Fa-f]{32}$" );
 
-        public RCluster( string CachePath = "Caches" )
+        public RCluster( string CachePath )
         {
+            if ( string.IsNullOrEmpty( CachePath ) ) CachePath = "Caches";
+
             Handler = RequestHandler;
             CStore = new CacheStore( CachePath );
 

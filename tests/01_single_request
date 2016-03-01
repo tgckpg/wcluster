@@ -1,0 +1,9 @@
+#!/bin/bash
+
+goal "Checking if the downloaded file is in correct format"
+
+wget -qO- "http://127.0.0.1:$SERVER_PORT/" --post-data "appver=1.0.0.0&request0=HTg4tFcLbZJwlMSiqErYLhzpacZgezKwCerLTFZAYE%2BCgmYY6CTVFCrd2GTHgfMQFrwGu4cSOnaO6Owmgm1%2FwIXYOEeZrJZ3poiMyQIllnREJXruX%2BcUxiarTfPTXSqObvDxr7iXykOWYWGGM6zhUp6oKbq3mdY0xpeE6Kml3tU%3D&timetoken=635350360592812227&q=fde2dfc98bbe7450f95f226e15da7451" > $TempFile
+exitOk $? "Cannot download the required file"
+
+file $TempFile | grep -q JPEG
+exitOk $? "Downloaded file is not a jpeg"

@@ -19,7 +19,11 @@ namespace wcluster
         public string RawQuery { get; private set; }
         public NameValueCollection Query { get; private set; }
 
+#if DEBUG
+        public static string MainServer = "https://botanical.astropenguin.net/";
+#else
         public static string MainServer = "https://wcache.astropenguin.net/";
+#endif
 
         public TokenRequest( HttpListenerRequest Request )
         {

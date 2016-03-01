@@ -25,6 +25,8 @@ namespace wcluster
 
             string host = null;
             int port = 0;
+
+            string cached = "";
             bool help = false;
 
             bool @default = true;
@@ -58,6 +60,7 @@ namespace wcluster
                     host = v;
                     @default = false;
                 } }
+                , { "cache-dir=", "Set the cache directory, default cwd", v => { cached = v; } }
                 , { "p|port=", "Listening port, default 5000"
                 , v => {
                     int.TryParse( v, out port );
@@ -101,7 +104,7 @@ namespace wcluster
 
             Logger.Log( ID, "Working Directory: " + Directory.GetCurrentDirectory(), LogType.DEBUG );
 
-            RCluster CL = new RCluster();
+            RCluster CL = new RCluster( cached );
             Servlet S = new Servlet( CL.Handler );
 
             S.Listen( host, port );

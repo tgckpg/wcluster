@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ ! -x /usr/bin/uuidgen ]; then
+    function uuidgen {
+        cat /proc/sys/kernel/random/uuid
+    }
+fi
+
+
+if [ ! -x tempfile ]; then
+    function tempfile {
+        NAME=`uuidgen`
+        touch /tmp/$NAME
+        echo $NAME
+    }
+fi
