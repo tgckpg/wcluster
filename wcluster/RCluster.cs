@@ -45,6 +45,14 @@ namespace wcluster
             {
                 TokenRequest Request = new TokenRequest( Context.Request );
 
+                if ( Context.Request.HttpMethod == "GET" )
+                {
+                    byte[] ResponseData = Encoding.ASCII.GetBytes( "0" );
+                    Context.Response.OutputStream.Write( ResponseData, 0, ResponseData.Length );
+                    Context.Response.Close();
+                    return;
+                }
+
                 string id = Request.Query.Get( "q" );
                 if ( string.IsNullOrEmpty( id ) )
                 {

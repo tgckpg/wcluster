@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 using Net.Astropenguin.Logging;
 using System.Threading;
+using Net.Astropenguin.Linq;
 
 namespace wcluster
 {
@@ -15,15 +16,42 @@ namespace wcluster
     {
         private static readonly string ID = typeof( Program ).Name;
 
+        public const LogType Plain = LogType.R39;
+
         static void Main( string[] args )
         {
+            ConsoleControl.EnableQuickEditMode();
+
             Logger.OnLog += Logger_OnLog;
             Logger.Log( ID, "Working Directory: " + Directory.GetCurrentDirectory(), LogType.DEBUG );
 
             RCluster CL = new RCluster();
-            Servelet S = new Servelet( CL.Handler );
+            Servlet S = new Servlet( CL.Handler );
             S.Listen();
-            S.Start();
+
+            string[] URIs = S.Listener.Prefixes.ToArray();
+            try
+            {
+                S.Start();
+            }
+            catch( HttpListenerException ex )
+            {
+                Logger.Log( ID, ex.Message, LogType.ERROR );
+                Logger.Log( ID, "Perhaps access is denied, please run the following command(s) with admin privilege:", LogType.INFO );
+
+                string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+                foreach( string Uri in URIs )
+                {
+                    Logger.Log( ID, string.Format( "    netsh http add urlacl url={0} user={1}", Uri, userName ), Plain );
+                }
+
+                Logger.Log( ID, "Press any key to exit", Plain );
+                Console.ReadKey();
+            }
+            catch( Exception ex )
+            {
+                Logger.Log( ID, ex.Message, LogType.ERROR );
+            }
         }
 
         #region Logging
@@ -40,16 +68,25 @@ namespace wcluster
 
             Printing = true;
 
-            string id = LogArgs.id;
+            switch ( LogArgs.Type )
+            {
+                case Plain:
+                    Console.WriteLine( LogArgs.Message );
+                    break;
 
-            string d = string.Format( "{0:MM-dd-yyyy HH:mm:ss}", LogArgs.timestamp );
+                default:
+                    string id = LogArgs.id;
 
-            // Write date
-            Console.Write( "[" + d + "]" );
+                    string d = string.Format( "{0:MM-dd-yyyy HH:mm:ss}", LogArgs.timestamp );
 
-            WriteLevel( LogArgs.Type );
+                    // Write date
+                    Console.Write( "[" + d + "]" );
 
-            Console.WriteLine( "[{0}] {1}", LogArgs.id, LogArgs.Message );
+                    WriteLevel( LogArgs.Type );
+
+                    Console.WriteLine( "[{0}] {1}", LogArgs.id, LogArgs.Message );
+                    break;
+            }
 
             Printing = false;
             if ( 0 < LogQ.Count )

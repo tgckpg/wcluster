@@ -10,20 +10,21 @@ using Net.Astropenguin.Logging;
 
 namespace wcluster
 {
-    public class Servelet 
+    public class Servlet 
     {
-        private static readonly string ID = typeof( Servelet ).Name;
+        private static readonly string ID = typeof( Servlet ).Name;
+
+        public HttpListener Listener { get; private set; }
 
         private Action<HttpListenerContext> RequestHandler;
-        private HttpListener Listener;
 
-        public Servelet( Action<HttpListenerContext> Handler )
+        public Servlet( Action<HttpListenerContext> Handler )
         {
             Listener = new HttpListener();
             this.RequestHandler = Handler;
         }
 
-        public void Listen( string Uri = "http://localhost:8081/" )
+        public void Listen( string Uri = "http://*:8082/" )
         {
             Listener.Prefixes.Add( Uri );
         }
@@ -43,7 +44,6 @@ namespace wcluster
                 }
                 catch ( Exception )
                 {
-                    // Ignored for this example
                 }
             }
         }
