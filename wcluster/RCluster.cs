@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
 
 using Net.Astropenguin.Logging;
-using System.Text.RegularExpressions;
 
 namespace wcluster
 {
@@ -23,8 +21,6 @@ namespace wcluster
         private static readonly string ID = typeof( RCluster ).Name;
 
         public Action<HttpListenerContext> Handler;
-
-        public static string MainServer = "https://wcache.astropenguin.net/";
 
         private CacheStore CStore;
 
@@ -59,7 +55,7 @@ namespace wcluster
                 if ( !C.Exists || C.Expired )
                 {
                     Logger.Log( ID, "Cache " + id + " does not exists or expired, requesting from remote", LogType.DEBUG );
-                    await Request.ForwardRequest( C );
+                    await Request.ForwardRequest( Request, C );
                 }
 
                 Context.Response.StatusCode = 200;
@@ -93,69 +89,5 @@ namespace wcluster
             }
         }
 
-        class TokenRequest
-        {
-            public NameValueCollection Query { get; private set; }
-
-            public TokenRequest( HttpListenerRequest Request )
-            {
-                try
-                {
-                    using ( StreamReader reader
-                        = new StreamReader( Request.InputStream, Request.ContentEncoding ) )
-                    {
-                        Query = HttpUtility.ParseQueryString( reader.ReadToEnd() );
-                    }
-                }
-                catch( Exception ex )
-                {
-                    Logger.Log( ID, ex.Message, LogType.ERROR );
-                }
-            }
-
-            public async Task ForwardRequest( CacheStore.Cache Cache )
-            {
-                WebRequest Request = WebRequest.Create( MainServer );
-                Request.Method = "POST";
-                Request.ContentType = "application/x-www-form-urlencoded";
-
-                byte[] Data = Encoding.ASCII.GetBytes( "q=" + Cache.Id );
-
-                Request.ContentLength = Data.Length;
-
-                Stream stream = Request.GetRequestStream();
-
-                stream.Write( Data, 0, Data.Length );
-                stream.Close();
-
-                WebResponse Response = Request.GetResponse();
-
-                HttpStatusCode StatusCode = ( ( HttpWebResponse ) Response ).StatusCode;
-
-                switch ( StatusCode )
-                {
-                    case HttpStatusCode.OK:
-                        // Special < 3 byte return
-                        if ( Response.ContentLength < 3 )
-                        {
-                            byte[] b = new byte[ 3 ];
-                            Response.GetResponseStream().Read( b, 0, 3 );
-
-                            string Code = Encoding.ASCII.GetString( b );
-                            Logger.Log( ID, "Server return: " + Code, LogType.WARNING );
-
-                            await Cache.Save( Response.ContentType, b );
-                        }
-                        else
-                        {
-                            await Cache.Save( Response.ContentType, Response.GetResponseStream() );
-                        }
-                        break;
-                    default:
-                        Logger.Log( ID, "Error getting cache: " + StatusCode, LogType.WARNING );
-                        break;
-                }
-            }
-        }
     }
 }

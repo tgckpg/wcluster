@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 using Microsoft.Deployment.Compression.Cab;
 
+using Net.Astropenguin.Logging;
+
 namespace wcluster
 {
     class CacheStore
@@ -34,6 +36,8 @@ namespace wcluster
 
         public class Cache
         {
+            private static readonly string ID = typeof( Cache ).Name;
+
             private CabInfo Store;
             private MixedInfo FInfo;
             private string _token;
@@ -94,15 +98,9 @@ namespace wcluster
                 {
                     byte b = ( byte ) s.ReadByte();
 
-                    if( b == 0xD )
-                    {
-                        IsCR = true;
-                    }
+                    if( b == 0xD ) IsCR = true;
                     else if( b == 0xA && IsCR ) break;
-                    else
-                    {
-                        IsCR = false;
-                    }
+                    else IsCR = false;
 
                     typeDat[ i++ ] = b;
                 }
@@ -114,28 +112,46 @@ namespace wcluster
 
             public async Task Save( string ContentType, byte[] bytes )
             {
-                this.ContentType = ContentType;
-                using ( FileStream WriteStream = File.OpenWrite( Token ) )
+                try
                 {
-                    byte[] b = Encoding.ASCII.GetBytes( ContentType );
-                    await WriteStream.WriteAsync( b, 0, b.Length );
-                    await WriteStream.WriteAsync( new byte[] { 0xD, 0xA }, 0, 2 );
-                    await WriteStream.WriteAsync( bytes, 0, bytes.Length );
-                }
-            }
-
-            public async Task Save( string ContentType, Stream ReadStream )
-            {
-                this.ContentType = ContentType;
-                using ( ReadStream )
-                {
+                    this.ContentType = ContentType;
                     using ( FileStream WriteStream = File.OpenWrite( Token ) )
                     {
                         byte[] b = Encoding.ASCII.GetBytes( ContentType );
                         await WriteStream.WriteAsync( b, 0, b.Length );
                         await WriteStream.WriteAsync( new byte[] { 0xD, 0xA }, 0, 2 );
-                        await ReadStream.CopyToAsync( WriteStream );
+                        await WriteStream.WriteAsync( bytes, 0, bytes.Length );
                     }
+
+                    FInfo = new MixedInfo( new FileInfo( Token ) );
+                }
+                catch( Exception ex )
+                {
+                    Logger.Log( ID, ex.Message, LogType.ERROR );
+                }
+            }
+
+            public async Task Save( string ContentType, Stream ReadStream )
+            {
+                try
+                {
+                    this.ContentType = ContentType;
+                    using ( ReadStream )
+                    {
+                        using ( FileStream WriteStream = File.OpenWrite( Token ) )
+                        {
+                            byte[] b = Encoding.ASCII.GetBytes( ContentType );
+                            await WriteStream.WriteAsync( b, 0, b.Length );
+                            await WriteStream.WriteAsync( new byte[] { 0xD, 0xA }, 0, 2 );
+                            await ReadStream.CopyToAsync( WriteStream );
+                        }
+                    }
+
+                    FInfo = new MixedInfo( new FileInfo( Token ) );
+                }
+                catch ( Exception ex )
+                {
+                    Logger.Log( ID, ex.Message, LogType.ERROR );
                 }
             }
         }
