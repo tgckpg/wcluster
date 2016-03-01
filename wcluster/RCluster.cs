@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Net.Astropenguin.Logging;
@@ -30,6 +31,12 @@ namespace wcluster
         {
             Handler = RequestHandler;
             CStore = new CacheStore( CachePath );
+
+            Timer Tmr = new Timer( x =>
+            {
+                Logger.Log( ID, "Periodic archiving check", LogType.INFO );
+                Packer.Pack( CStore );
+            }, null, 0, 3600 * 1000 );
         }
 
         private async void RequestHandler( HttpListenerContext Context )

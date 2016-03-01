@@ -13,22 +13,22 @@ namespace wcluster
 {
     class CacheStore
     {
-        private CabInfo Store;
+        public CabInfo CabStore { get; private set; }
 
-        private static DirectoryInfo Root;
-        private static DirectoryInfo StagingArea;
+        public static DirectoryInfo Root { get; private set; }
+        public static DirectoryInfo StagingArea { get; private set; }
 
         public CacheStore( string Path )
         {
             Root = Directory.CreateDirectory( Path );
             StagingArea = Directory.CreateDirectory( Root.FullName + "\\Staging" );
 
-            Store = new CabInfo( Root.FullName + "\\Archives.cab" );
+            CabStore = new CabInfo( Root.FullName + "\\Archives.cab" );
         }
 
         public Cache InitCache( string id )
         {
-            Cache C = new Cache( Store );
+            Cache C = new Cache( CabStore );
             C.SetId( id );
 
             return C;
@@ -76,13 +76,19 @@ namespace wcluster
             internal void SetId( string id )
             {
                 Id = id;
-                if ( Store.Exists )
-                {
-                    FInfo = new MixedInfo( Store.GetFiles().FirstOrDefault( x => x.Name == id ) );
-                }
-                else if ( File.Exists( Token ) )
+
+                // Files in staging area is always newer than archived one
+                if ( File.Exists( Token ) )
                 {
                     FInfo = new MixedInfo( new FileInfo( Token ) );
+                }
+                else if ( Store.Exists )
+                {
+                    CabFileInfo C = Store.GetFiles().FirstOrDefault( x => x.Name == id );
+                    if ( C != null )
+                    {
+                        FInfo = new MixedInfo( C );
+                    }
                 }
             }
 
