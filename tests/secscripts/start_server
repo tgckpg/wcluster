@@ -1,6 +1,9 @@
 #!/bin/bash
 
-DAEMON="wcluster/bin/Release/App.exe -p $SERVER_PORT --cache-dir __cache"
+DAEMON="wcluster/bin/Release/App.exe"
+chmod +x $DAEMON
+
+DAEMON="$DAEMON -p $SERVER_PORT --cache-dir __cache"
 
 echo "Starting the server"
 $DAEMON > $SERVER_LOG &
