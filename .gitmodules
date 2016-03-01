@@ -1,0 +1,3 @@
+[submodule "libs/libpenguin"]
+	path = libs/libpenguin
+	url = git@github.com:tgckpg/libpenguin.git
