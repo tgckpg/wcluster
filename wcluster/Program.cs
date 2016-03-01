@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Net.Astropenguin.Logging;
 using System.Threading;
 using Net.Astropenguin.Linq;
+using NDesk.Options;
 
 namespace wcluster
 {
@@ -22,12 +23,88 @@ namespace wcluster
         {
             ConsoleControl.EnableQuickEditMode();
 
+            string host = null;
+            int port = 0;
+            bool help = false;
+
+            bool @default = true;
+
+            Action<string> SetLog = v =>
+            {
+                switch ( v )
+                {
+                    case "vv":
+                        Logger.LogFilter.Add( LogType.DEBUG );
+                        goto case "v";
+                    case "v":
+                        Logger.LogFilter.Add( LogType.INFO );
+                        break;
+
+                    default:
+                        goto case "v";
+                }
+
+                Logger.LogFilter.Add( LogType.WARNING );
+                Logger.LogFilter.Add( LogType.ERROR );
+                Logger.LogFilter.Add( Plain );
+
+                @default = false;
+            };
+
+            OptionSet OptSet = new OptionSet()
+            {
+                { "h|host=", "Listening host, default 127.0.0.1"
+                ,  v => {
+                    host = v;
+                    @default = false;
+                } }
+                , { "p|port=", "Listening port, default 5000"
+                , v => {
+                    int.TryParse( v, out port );
+                    @default = false;
+                } }
+                , { "v|vv", "Verbosity level", SetLog }
+                , { "help", "Show this message and exit", v => { help = true; } }
+            };
+
+            try
+            {
+                OptSet.Parse( args );
+            }
+            catch( OptionException e )
+            {
+                Console.WriteLine( "Invalid argument: " + e.Message );
+                help = true;
+            }
+
+            if( help )
+            {
+                OptSet.WriteOptionDescriptions( Console.Out );
+                return;
+            }
+
+            if( Logger.LogFilter.Count == 0 )
+            {
+#if DEBUG
+                SetLog( "vv" );
+#else
+                SetLog( null );
+#endif
+            }
+
             Logger.OnLog += Logger_OnLog;
+
+            if ( @default )
+            {
+                Logger.Log( ID, "Not options specified, running in default mode.", LogType.INFO );
+            }
+
             Logger.Log( ID, "Working Directory: " + Directory.GetCurrentDirectory(), LogType.DEBUG );
 
             RCluster CL = new RCluster();
             Servlet S = new Servlet( CL.Handler );
-            S.Listen();
+
+            S.Listen( host, port );
 
             string[] URIs = S.Listener.Prefixes.ToArray();
             try
@@ -36,17 +113,31 @@ namespace wcluster
             }
             catch( HttpListenerException ex )
             {
-                Logger.Log( ID, ex.Message, LogType.ERROR );
-                Logger.Log( ID, "Perhaps access is denied, please run the following command(s) with admin privilege:", LogType.INFO );
-
-                string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-                foreach( string Uri in URIs )
+                switch ( ex.ErrorCode )
                 {
-                    Logger.Log( ID, string.Format( "    netsh http add urlacl url={0} user={1}", Uri, userName ), Plain );
+                    case 183:
+                        Logger.Log( ID, "Address is already been used", LogType.ERROR );
+                        break;
+                    case 5:
+                        Logger.Log( ID, "Access is denied. Please run the following command(s):", LogType.ERROR );
+
+                        string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+                        foreach ( string Uri in URIs )
+                        {
+                            Logger.Log( ID, string.Format( "    netsh http add urlacl url={0} user={1}", Uri, userName ), Plain );
+                        }
+                        break;
+
+                    default:
+                        Logger.Log( ID, ex.Message, LogType.ERROR );
+                        break;
                 }
 
+#if DEBUG
+                Thread.Sleep( 1500 );
                 Logger.Log( ID, "Press any key to exit", Plain );
-                Console.ReadKey();
+                Console.Read();
+#endif
             }
             catch( Exception ex )
             {
@@ -54,7 +145,7 @@ namespace wcluster
             }
         }
 
-        #region Logging
+#region Logging
         static volatile Queue<LogArgs> LogQ = new Queue<LogArgs>();
         static volatile bool Printing = false;
 
@@ -119,7 +210,7 @@ namespace wcluster
             Console.ResetColor();
             Console.Write( "]" );
         }
-        #endregion
+#endregion
     }
 
 }

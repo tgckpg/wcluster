@@ -56,6 +56,10 @@
       <HintPath>..\packages\MSFTCompressionCab.1.0.0\lib\Microsoft.Deployment.Compression.Cab.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NDesk.Options, Version=0.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NDesk.Options.0.2.1\lib\NDesk.Options.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
@@ -97,7 +101,7 @@
   <PropertyGroup>
     <ILMerge>C:\Program Files (x86)\Microsoft\ILMerge\ILMerge.exe</ILMerge>
     <DotNet46>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6</DotNet46>
-    <PostBuildEvent>if "$(ConfigurationName)"=="Release" "$(ILMerge)" "$(TargetPath)" "$(TargetDir)Microsoft.Deployment.Compression.Cab.dll" "$(TargetDir)Microsoft.Deployment.Compression.dll" /out:"$(TargetDir)App.exe" /target:exe /targetplatform:v4,"$(DotNet46)" /ndebug</PostBuildEvent>
+    <PostBuildEvent>if "$(ConfigurationName)"=="Release" "$(ILMerge)" "$(TargetPath)"  "$(TargetDir)Microsoft.Deployment.Compression.Cab.dll" "$(TargetDir)Microsoft.Deployment.Compression.dll" "$(TargetDir)NDesk.Options.dll" /out:"$(TargetDir)App.exe" /target:exe /targetplatform:v4,"$(DotNet46)" /ndebug</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

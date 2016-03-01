@@ -10,11 +10,12 @@ using Net.Astropenguin.Logging;
 
 namespace wcluster
 {
-    public class Servlet 
+    public class Servlet
     {
         private static readonly string ID = typeof( Servlet ).Name;
 
         public HttpListener Listener { get; private set; }
+        public bool HasPublic { get; private set; }
 
         private Action<HttpListenerContext> RequestHandler;
 
@@ -24,9 +25,33 @@ namespace wcluster
             this.RequestHandler = Handler;
         }
 
-        public void Listen( string Uri = "http://*:8082/" )
+        public void Listen( string host, int port )
         {
-            Listener.Prefixes.Add( Uri );
+            if ( host == null ) host = "127.0.0.1";
+            if ( port == 0 ) port = 5000;
+
+            switch ( host )
+            {
+                case "localhost":
+                case "127.0.0.1":
+                    Logger.Log(
+                        ID
+                        , "You are listening on a localhost. Store apps restrictions may not allow request to be sent to this address."
+                        , LogType.WARNING );
+                    break;
+                case "0.0.0.0":
+                case "*":
+                case "+":
+                    Logger.Log(
+                        ID
+                        , "If you are listening on a public interface. Please ensure the appropriate firewall rule is added."
+                        , LogType.INFO );
+                    host = "*";
+                    HasPublic = true;
+                    break;
+            }
+
+            Listener.Prefixes.Add( "http://" + host + ":" + port + "/" );
         }
 
         public void Start()
