@@ -48,6 +48,8 @@ namespace wcluster
                 }
             }
 
+            public string ContentType { get; private set; }
+
             public string Id { get; private set; }
 
             public string Token
@@ -82,31 +84,59 @@ namespace wcluster
 
             public Stream OpenStream()
             {
-                return FInfo.OpenRead();
-            }
+                Stream s = FInfo.OpenRead();
 
-            public async Task Save()
-            {
-                await Task.Run( () =>
+                byte[] typeDat = new byte[ 1024 ];
+
+                bool IsCR = false;
+                int i = 0;
+                while ( s.CanRead )
                 {
-                    string[] s = Token.Split( '\\' );
+                    byte b = ( byte ) s.ReadByte();
 
-                    // string SrcFileName = s.Last();
+                    if( b == 0xD )
+                    {
+                        IsCR = true;
+                    }
+                    else if( b == 0xA && IsCR ) break;
+                    else
+                    {
+                        IsCR = false;
+                    }
 
-                    // string Dir = Token.Substring( 0, Token.Length - SrcFileName.Length );
-                } );
+                    typeDat[ i++ ] = b;
+                }
+
+                ContentType = Encoding.ASCII.GetString( typeDat, 0, i - 1 );
+
+                return s;
             }
 
-            public async Task Save( Stream ReadStream )
+            public async Task Save( string ContentType, byte[] bytes )
             {
+                this.ContentType = ContentType;
+                using ( FileStream WriteStream = File.OpenWrite( Token ) )
+                {
+                    byte[] b = Encoding.ASCII.GetBytes( ContentType );
+                    await WriteStream.WriteAsync( b, 0, b.Length );
+                    await WriteStream.WriteAsync( new byte[] { 0xD, 0xA }, 0, 2 );
+                    await WriteStream.WriteAsync( bytes, 0, bytes.Length );
+                }
+            }
+
+            public async Task Save( string ContentType, Stream ReadStream )
+            {
+                this.ContentType = ContentType;
                 using ( ReadStream )
                 {
                     using ( FileStream WriteStream = File.OpenWrite( Token ) )
                     {
+                        byte[] b = Encoding.ASCII.GetBytes( ContentType );
+                        await WriteStream.WriteAsync( b, 0, b.Length );
+                        await WriteStream.WriteAsync( new byte[] { 0xD, 0xA }, 0, 2 );
                         await ReadStream.CopyToAsync( WriteStream );
                     }
                 }
-                await Save();
             }
         }
 

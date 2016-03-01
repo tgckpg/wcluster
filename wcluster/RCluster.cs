@@ -131,6 +131,7 @@ namespace wcluster
                 WebResponse Response = Request.GetResponse();
 
                 HttpStatusCode StatusCode = ( ( HttpWebResponse ) Response ).StatusCode;
+
                 switch ( StatusCode )
                 {
                     case HttpStatusCode.OK:
@@ -140,11 +141,14 @@ namespace wcluster
                             byte[] b = new byte[ 3 ];
                             Response.GetResponseStream().Read( b, 0, 3 );
 
-                            Logger.Log( ID, "Server return: " + Encoding.ASCII.GetString( b ), LogType.WARNING );
+                            string Code = Encoding.ASCII.GetString( b );
+                            Logger.Log( ID, "Server return: " + Code, LogType.WARNING );
+
+                            await Cache.Save( Response.ContentType, b );
                         }
                         else
                         {
-                            await Cache.Save( Response.GetResponseStream() );
+                            await Cache.Save( Response.ContentType, Response.GetResponseStream() );
                         }
                         break;
                     default:

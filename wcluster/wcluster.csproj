@@ -89,7 +89,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <Import Project="..\..\wenku10\libs\libpenguin\Global\Global.projitems" Label="Shared" />
+  <Import Project="..\libs\libpenguin\Global\Global.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <ILMerge>C:\Program Files (x86)\Microsoft\ILMerge\ILMerge.exe</ILMerge>
