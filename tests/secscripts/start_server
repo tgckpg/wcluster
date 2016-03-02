@@ -1,6 +1,7 @@
 #!/bin/bash
 
-DAEMON="wcluster/bin/Release/App.exe"
+DAEMON=$TEMPDIR/server.exe
+cp -v "wcluster/bin/Release/App.exe" $DAEMON
 chmod +x $DAEMON
 
 DAEMON="$DAEMON -p $SERVER_PORT --cache-dir __cache"
